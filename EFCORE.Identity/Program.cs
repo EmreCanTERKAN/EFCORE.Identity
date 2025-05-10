@@ -14,7 +14,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer"));
 });
 
-builder.Services.AddIdentity<AppUser, IdentityRole<Guid>>(options =>
+builder.Services.AddIdentity<AppUser, AppRole>(options =>
 {
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireDigit = false;

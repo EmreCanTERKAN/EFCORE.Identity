@@ -129,7 +129,7 @@ public class AuthController(
             }
             else
             {
-                return StatusCode(500, $"Şifrenizi 5 kere yanlış girdiğiniz için kullanıcınız {timeSpan.Value.TotalSeconds} saniye kilitlidir");
+                return StatusCode(500, $"Şifrenizi 5 kere yanlış girdiğiniz için kullanıcınız 30 saniye kilitlidir");
             }
         }
 
