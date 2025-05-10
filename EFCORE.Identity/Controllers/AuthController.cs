@@ -2,6 +2,7 @@
 using EFCORE.Identity.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFCORE.Identity.Controllers;
 [Route("api/[controller]/[action]")]
@@ -82,5 +83,25 @@ public class AuthController(
         }
 
         return NoContent();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Login (LoginDto request, CancellationToken cancellationToken)
+    {
+        AppUser? appUser = await userManager.Users.FirstOrDefaultAsync(p => p.Email == request.UserNameOrEmail || p.UserName == request.UserNameOrEmail);
+
+        if (appUser is null)
+        {
+            return BadRequest(new { Message = "Kullanıcı Bulunamadı" });
+        }
+
+        bool result = await userManager.CheckPasswordAsync(appUser, request.Password);
+
+        if (!result)
+        {
+            return BadRequest(new { Message = "Şifre Yanlış" });
+        }
+
+        return Ok(new { Token = "Token" });
     }
 }
