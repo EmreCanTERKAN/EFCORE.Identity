@@ -1,5 +1,6 @@
 ﻿using EFCORE.Identity.Dtos;
 using EFCORE.Identity.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,8 @@ namespace EFCORE.Identity.Controllers;
 [Route("api/[controller]/[action]")]
 [ApiController]
 public class AuthController(
-    UserManager<AppUser> userManager) : ControllerBase
+    UserManager<AppUser> userManager,
+    SignInManager<AppUser> signInManager) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Register(RegisterDto request, CancellationToken cancellationToken)
@@ -86,7 +88,7 @@ public class AuthController(
     }
 
     [HttpPost]
-    public async Task<IActionResult> Login (LoginDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Login(LoginDto request, CancellationToken cancellationToken)
     {
         AppUser? appUser = await userManager.Users.FirstOrDefaultAsync(p => p.Email == request.UserNameOrEmail || p.UserName == request.UserNameOrEmail);
 
@@ -104,4 +106,47 @@ public class AuthController(
 
         return Ok(new { Token = "Token" });
     }
+
+    [HttpPost]
+    public async Task<IActionResult> LoginWithSignInManager(LoginDto request, CancellationToken cancellationToken)
+    {
+        AppUser? appUser = await userManager.Users.FirstOrDefaultAsync(p => p.Email == request.UserNameOrEmail || p.UserName == request.UserNameOrEmail);
+
+        if (appUser is null)
+        {
+            return BadRequest(new { Message = "Kullanıcı Bulunamadı" });
+        }
+
+        var result = await signInManager.CheckPasswordSignInAsync(appUser, request.Password, true);
+
+        if (result.IsLockedOut)
+        {
+            TimeSpan? timeSpan = appUser.LockoutEnd - DateTime.UtcNow;
+
+            if(timeSpan is not null)
+            {
+                return StatusCode(500, $"Şifrenizi 5 kere yanlış girdiğiniz için kullanıcınız {timeSpan.Value.TotalSeconds} saniye kilitlidir");
+            }
+            else
+            {
+                return StatusCode(500, $"Şifrenizi 5 kere yanlış girdiğiniz için kullanıcınız {timeSpan.Value.TotalSeconds} saniye kilitlidir");
+            }
+        }
+
+        if (!result.Succeeded)
+        {
+            return StatusCode(500, "Şifreniz yanlış");
+        }
+
+        if (result.IsNotAllowed)
+        {
+            return StatusCode(500, "Mail Adresiniz onaylı değil");
+        }
+
+
+        return Ok(new { Token = "Token" });
+
+    }
+
+
 }
